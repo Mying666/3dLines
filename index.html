@@ -5,8 +5,214 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>3dLines</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        .EC{
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
-    
+<div class="EC"></div>
+<script src="http://gallery.echartsjs.com/dep/jquery/jquery.min.js"></script>
+<script src="http://gallerybox.echartsjs.com/dep/echarts/3.8.0/echarts.min.js"></script>
+<script src="http://echarts.baidu.com/resource/echarts-gl-latest/dist/echarts-gl.min.js"></script>
+<script src="http://gallerybox.echartsjs.com/dep/echarts/map/js/world.js"></script>
+<script>
+    window.onload = () => {
+        let EC = echarts.init(document.querySelector('.EC'))
+        let canvas = document.createElement('canvas');
+        // 地球皮肤
+        let mapChart = echarts.init(canvas, null, {
+            width: 4096,
+            height: 2048
+        });
+        mapChart.setOption({
+            series: [{
+                type: 'map',
+                map: 'world',
+                // 绘制完整尺寸的 echarts 实例
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                boundingCoords: [
+                    [-180, 90],
+                    [180, -90]
+                ]
+            }]
+        });
+        let option = {
+            title: {
+                text: '点击地球获取该区域地图',
+                textStyle: {
+                    color: '#fff'
+                }
+            },
+            backgroundColor: '#333',
+            tooltip: {
+                show: true
+            },
+            visualMap: [{
+                // show: false,
+                type: 'continuous',
+                seriesIndex: 0,
+                text: ['scatter3D'],
+                textStyle: {
+                    color: '#fff'
+                },
+                calculable: true,
+                max: 3000,
+                inRange: {
+                    color: ['#87aa66', '#eba438', '#d94d4c']
+                }
+            }, {
+                show: false,
+                type: 'continuous',
+                seriesIndex: 1,
+                calculable: true,
+                max: 3000,
+                inRange: {
+                    color: ['#87aa66', '#eba438', '#d94d4c']
+                }
+            }],
+            globe: {
+                baseTexture: mapChart,
+                // shading: 'lambert',
+                light: { // 光照阴影
+                    main: {
+                        color: '#fff', // 光照颜色
+                        intensity: 1.2, // 光照强度
+                        // shadowQuality: 'high', //阴影亮度
+                        shadow: false, // 是否显示阴影
+                        alpha: 40,
+                        beta: -30
+                    },
+                    ambient: {
+                        intensity: 0.5
+                    }
+                },
+                viewControl: {
+                    alpha: 30,
+                    beta: 160,
+                    // targetCoord: [116.46, 39.92],
+                    autoRotate: true,
+                    autoRotateAfterStill: 10,
+                    distance: 240
+                }
+            },
+            series: [{
+                name: 'lines3D',
+                type: 'lines3D',
+                zlevel: 2,
+                coordinateSystem: 'globe',
+                effect: {
+                    show: true
+                },
+                blendMode: 'lighter',
+                lineStyle: {
+                    width: 2
+                },
+                data: [],
+                silent: false
+            },
+            {
+                name: '地域详情',
+                type: 'map',
+                map: '',
+                zlevel: 1,
+                zoom: 1,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                data: []
+            }]
+        }
+        // 随机数据
+        const rodamData = () => {
+            let name = '随机点' + Math.random().toFixed(5) * 100000
+            let longitude = 105.18
+            let longitude2 = Math.random() * 360 - 180
+            let latitude = 37.51
+            let latitude2 = Math.random() * 180 - 90
+            return {
+                coords: [
+                    [longitude2, latitude2],
+                    [longitude, latitude]
+                ],
+                value: (Math.random() * 3000).toFixed(2)
+            }
+        }
+        for (let i = 0; i < 500; i++) {
+            option.series[0].data = option.series[0].data.concat(rodamData())
+        }
+        EC.setOption(option)
+        let innerOption = {
+            title: {
+                text: '双击地图返回上一层',
+                textStyle: {
+                    color: '#fff'
+                }
+            },
+            visualMap: [{
+                show: false,
+                type: 'continuous',
+                seriesIndex: 0,
+                text: ['scatter3D'],
+                textStyle: {
+                    color: '#fff'
+                },
+                calculable: true,
+                max: 3000,
+                inRange: {
+                    color: ['#87aa66', '#eba438', '#d94d4c']
+                }
+            }],
+            series: [{
+                type: 'map',
+                map: '',
+                zoom: 1,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                data: []
+            }]
+        }
+        mapChart.on('click', params => {
+            let name = params.name
+            let mapJson = 'https://raw.githubusercontent.com/Mying666/EC-JSON/gh-pages/json/' + name + '.json'
+            EC.showLoading()
+            $.getJSON(mapJson, geoJson => {
+                option.title.text = '双击地图返回上级'
+                option.series[1].map = name
+                option.series[1].zlevel = 3
+                echarts.registerMap(name, geoJson)
+                // 第二层随机数据
+                let data = []
+                geoJson.features.forEach(d => {
+                    data.push({
+                        name: d.properties.name,
+                        value: (Math.random() * 3000).toFixed(2)
+                    })
+                })
+                option.series[1].data = data
+                EC.setOption(option)
+                EC.hideLoading()
+            })
+        })
+        EC.on('dblclick', () => {
+            option.title.text = '点击地球获取该区域地图'
+            option.series[1].map = ''
+            option.series[1].zlevel = 1
+            EC.setOption(option)
+        })
+    }
+</script>
 </body>
 </html>
