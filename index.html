@@ -152,38 +152,6 @@
             option.series[0].data = option.series[0].data.concat(rodamData())
         }
         EC.setOption(option)
-        let innerOption = {
-            title: {
-                text: '双击地图返回上一层',
-                textStyle: {
-                    color: '#fff'
-                }
-            },
-            visualMap: [{
-                show: false,
-                type: 'continuous',
-                seriesIndex: 0,
-                text: ['scatter3D'],
-                textStyle: {
-                    color: '#fff'
-                },
-                calculable: true,
-                max: 3000,
-                inRange: {
-                    color: ['#87aa66', '#eba438', '#d94d4c']
-                }
-            }],
-            series: [{
-                type: 'map',
-                map: '',
-                zoom: 1,
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                data: []
-            }]
-        }
         mapChart.on('click', params => {
             let name = params.name
             let mapJson = 'https://raw.githubusercontent.com/Mying666/EC-JSON/gh-pages/json/' + name + '.json'
